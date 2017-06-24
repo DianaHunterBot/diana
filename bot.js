@@ -22,7 +22,7 @@ telegramBot.command('start')
 .invoke(function (ctx) {
     // Setting data, data is used in text message templates.
     ctx.data.user = ctx.meta.user
-    // Invoke callback must return promise.
+    // Invoke callback must return promise.git push heroku master
     return ctx.sendMessage('Hello <%=user.first_name%>. How are you?')
 })
 .answer(function (ctx) {
