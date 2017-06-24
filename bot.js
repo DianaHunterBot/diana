@@ -6,7 +6,7 @@ let telegramBot
 if (process.env.NODE_ENV === 'production') {
     telegramBot = Bot({
         key: token,
-        webHook: process.env.HEROKU_URL + token
+        webHook: process.env.HEROKU_URL + telegramBot.token
     })
 } else {
     telegramBot = Bot({
