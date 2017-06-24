@@ -1,2 +1,2 @@
-const bot = require('./bot2')
+const bot = require('./bot')
 require('./web')(bot)

@@ -1,133 +1,126 @@
 const token = process.env.TOKEN
 
-const Bot = require('node-telegram-bot-api')
+const Bot = require('bot-brother')
 let telegramBot
 
 if (process.env.NODE_ENV === 'production') {
-    telegramBot = new Bot(token)
-    telegramBot.setWebHook(process.env.HEROKU_URL + telegramBot.token)
+    telegramBot = Bot({
+        key: token,
+        webHook: process.env.HEROKU_URL + token
+    })
 } else {
-    telegramBot = new Bot(token, { polling: true })
+    telegramBot = Bot({
+        key: token,
+        polling: { interval: 100, timeout: 1 }
+    })
 }
 
 console.log('Bot server started in the ' + process.env.NODE_ENV + ' mode')
 
-// telegramBot.onText(/^/, function (msg) {
-//     console.log('simple_message')
-//     console.log(msg)
-// })
-
-telegramBot.on('new_chat_participant', function (msg) {
-    console.log('new_chat_participant')
-    console.log(msg.new_chat_participant.username)
+// Let's create command '/start'.
+telegramBot.command('start')
+.invoke(function (ctx) {
+    // Setting data, data is used in text message templates.
+    ctx.data.user = ctx.meta.user
+    // Invoke callback must return promise.
+    return ctx.sendMessage('Hello <%=user.first_name%>. How are you?')
+})
+.answer(function (ctx) {
+    ctx.data.answer = ctx.answer
+    // Returns promise.
+    return ctx.sendMessage('OK. I understood. You feel <%=answer%>')
 })
 
-telegramBot.on('inline_query', function (msg) {
-    console.log('inline_query')
-    console.log(msg)
+// Creating command '/upload_photo'.
+telegramBot.command('upload_photo')
+.invoke(function (ctx) {
+    return ctx.sendMessage('Drop me a photo, please')
+})
+.answer(function (ctx) {
+    // ctx.message is an object that represents Message.
+    // See https://core.telegram.org/bots/api#message
+    return ctx.sendPhoto(ctx.message.photo[0].file_id, {caption: 'I got your photo!'})
 })
 
-telegramBot.on('callback_query', function teste (callbackQuery) {
-    console.log(callbackQuery.data)
-    const msg = callbackQuery.message
-    telegramBot.answerCallbackQuery(callbackQuery.id)
-        .then(() => telegramBot.sendMessage(msg.chat.id, 'You clicked!'))
+// Creating command '/categorias'.
+telegramBot.command('categorias')
+.invoke(function (ctx) {
+    return ctx.sendMessage('Vamos lá, qual categoria de denúncia você gostaria de ver?')
+})
+.keyboard([
+    [
+        {
+            'Misogenia': { go: 'misogenia' }
+        }
+    ],
+    [
+        {
+            'Homofobia': { go: 'homofobia' }
+        }
+    ],
+    [
+        {
+            'Bullying': { go: 'bullying' }
+        }
+    ],
+    [
+        {
+            'Machismo': { go: 'machismo' }
+        }
+    ],
+    [
+        {
+            'Sexismo': { go: 'sexismo' }
+        }
+    ],
+    [
+        {
+            'Discurso de ódio': { go: 'discurso_de_odio' }
+        }
+    ],
+    [
+        {
+            'Racismo': { go: 'racismo' }
+        }
+    ],
+    [
+        {
+            'Exclusão social': { go: 'exclusao_social' }
+        }
+    ],
+    [
+        {
+            'Discriminação sexual': { go: 'discriminacao_sexual' }
+        }
+    ],
+    [
+        {
+            'Ameaça': { go: 'ameaca' }
+        }
+    ],
+    [
+        {
+            'Incitação e/ou apologia ao crime': { go: 'incitacao_e_ou_apologia_ao_crime' }
+        }
+    ]
+])
+
+telegramBot.command('misogenia').invoke(function (ctx) {
+    return ctx.sendMessage('Você selecionou Misogenia')
 })
 
-telegramBot.onText(/\/categorias/, msg => {
-    const opts = {
-        // reply_to_message_id: msg.message_id,
-        reply_markup: JSON.stringify({
-            inline_keyboard: [
-                [
-                    {
-                        text: 'Misogenia',
-                        callback_data: 'misogenia'
-                    }
-                ],
-                [
-                    {
-                        text: 'Homofobia',
-                        callback_data: 'homofobia'
-                    }
-                ],
-                [
-                    {
-                        text: 'Bullying',
-                        callback_data: 'bullying'
-                    }
-                ],
-                [
-                    {
-                        text: 'Machismo',
-                        callback_data: 'machismo'
-                    }
-                ],
-                [
-                    {
-                        text: 'Sexismo',
-                        callback_data: 'sexismo'
-                    }
-                ],
-                [
-                    {
-                        text: 'Discurso de ódio',
-                        callback_data: 'discurso de ódio'
-                    }
-                ],
-                [
-                    {
-                        text: 'Racismo',
-                        callback_data: 'racismo'
-                    }
-                ],
-                [
-                    {
-                        text: 'Exclusão social',
-                        callback_data: 'exclusão social'
-                    }
-                ],
-                [
-                    {
-                        text: 'Discriminação sexual',
-                        callback_data: 'discriminação sexual'
-                    }
-                ],
-                [
-                    {
-                        text: 'Ameaça',
-                        callback_data: 'ameaça'
-                    }
-                ],
-                [
-                    {
-                        text: 'Incitação e/ou apologia ao crime',
-                        callback_data: 'incitação e/ou apologia ao crime'
-                    }
-                ]
-            ],
-            one_time_keyboard: true,
-            selective: true
-        })
-    }
-    telegramBot.sendMessage(msg.chat.id, 'Vamos lá, qual categoria de denúncia você gostaria de ver?', opts)
-})
-
-telegramBot.onText(/\/periodos/, msg => {
-    const opts = {
-        reply_to_message_id: msg.message_id,
-        reply_markup: JSON.stringify({
-            keyboard: [
-                ['As 10 últimas'],
-                ['As de hoje'],
-                ['As deste mês'],
-                ['As deste ano']
-            ],
-            one_time_keyboard: true,
-            selective: true
-        })
-    }
-    telegramBot.sendMessage(msg.chat.id, 'Defina um perído para de amostragem para as denúncias', opts)
-})
+// const opts = {
+//     reply_to_message_id: msg.message_id,
+//     reply_markup: JSON.stringify({
+//         keyboard: [
+//             ['As 10 últimas'],
+//             ['As de hoje'],
+//             ['As deste mês'],
+//             ['As deste ano']
+//         ],
+//         one_time_keyboard: true,
+//         selective: true
+//     })
+// }
 
 module.exports = telegramBot
